@@ -12,146 +12,164 @@ namespace TBAGame
         ConsoleText text = new ConsoleText();
         Random rand = new Random();
         bool inCombat = false;
-
+        bool exploringLocation = false;
+        bool talkingToNpc = false;
+        bool visitingLandmark = false;
         public void ExploreLocation(Location location, Player player)
         {
-            text.CleanLine("You arrive at: " + location.Name);
-            text.AddLine(location.Description);
-            text.GetLine();
-            text.CleanLine("You can visit these landmarks:");
-            for(int i = 0; i < location.Landmarks.Count; i++)
+            exploringLocation = true;
+            while (exploringLocation)
             {
-                text.AddLine($"{i+1}) {location.Landmarks[i].Name}");
-            }
-            int choice = text.GetLineInt(location.Landmarks.Count)-1;
-            VisitLandmark(location, player, location.Landmarks[choice]);
-
-        }
-        public void TalkToNpc(Location location, Player player, Landmark landmark, Npc npc)
-        {
-            text.CleanLine("talking to: " + npc.Name);
-            text.AddLine($"{npc.Dialogue[0]}");
-            text.AddLine("1) Listen");
-            text.AddLine("2) Give item");
-            text.AddLine("3) Exit conversation");
-            int choice = text.GetLineInt(3);
-            if (choice == 1)
-            {
-                for (int i = 1; i < npc.Dialogue.Count(); i++)
+                text.CleanLine("You arrive at: " + location.Name);
+                text.AddLine(location.Description);
+                text.GetLine();
+                text.CleanLine("You can visit these landmarks:");
+                int i;
+                for (i = 0; i < location.Landmarks.Count; i++)
                 {
-                    text.CleanLine(npc.Dialogue[i]);
-                    text.GetLine();
+                    text.AddLine($"{i + 1}) {location.Landmarks[i].Name}");
                 }
-                TalkToNpc(location, player, landmark, npc);
-            }
-            if(choice == 2)
-            {
-                if (player.Items.Count > 0)
+                text.AddLine($"{i + 1}) Move on to next location");
+                int choice = text.GetLineInt(location.Landmarks.Count + 1) - 1;
+                if (choice < location.Landmarks.Count)
                 {
-                    int j;
-                    for (j = 0; j < player.Items.Count; j++)
-                    {
-                        text.AddLine($"{j+1}) {player.Items[j].Name}");
-                    }
-                    text.AddLine($"{j+1}) I changed my mind");
-                    int itemChoice = text.GetLineInt(player.Items.Count+1);
-                    if(itemChoice > player.Items.Count)
-                    {
-                        TalkToNpc(location, player, landmark, npc);
-                    }
-                    else
-                    {
-                        text.AddLine($"You give item: {player.Items[itemChoice - 1].Name} to {npc.Name}");
-                        text.GetLine();
-                        if(player.Items[itemChoice - 1].Name == npc.DesiredItem.Name || npc.DesiredItem.Name == "any")
-                        {
-                            text.AddLine(npc.DesiredItemDialogue);
-                        }
-                        else
-                        {
-                            text.AddLine(npc.UndesiredItemDialogue);
-                        }
-                        text.GetLine();
-                    }
+                    VisitLandmark(location, player, location.Landmarks[choice]);
                 }
                 else
                 {
-                    text.CleanLine("You don't have any items");
+                    text.AddLine("Moving to next location...");
+                    exploringLocation = false;
+                    break;
                 }
-                TalkToNpc(location, player, landmark, npc);
             }
-            if(choice == 3)
+        }
+
+        public void TalkToNpc(Location location, Player player, Landmark landmark, Npc npc)
+        {
+            talkingToNpc = true;
+            while (talkingToNpc)
             {
-                VisitLandmark(location, player, landmark);
+                text.CleanLine("talking to: " + npc.Name);
+                text.AddLine($"{npc.Dialogue[0]}");
+                text.AddLine("1) Listen");
+                text.AddLine("2) Give item");
+                text.AddLine("3) Exit conversation");
+                int choice = text.GetLineInt(3);
+                if (choice == 1)
+                {
+                    for (int i = 1; i < npc.Dialogue.Count(); i++)
+                    {
+                        text.CleanLine(npc.Dialogue[i]);
+                        text.GetLine();
+                    }
+                }
+                if (choice == 2)
+                {
+                    if (player.Items.Count > 0)
+                    {
+                        int j;
+                        for (j = 0; j < player.Items.Count; j++)
+                        {
+                            text.AddLine($"{j + 1}) {player.Items[j].Name}");
+                        }
+                        text.AddLine($"{j + 1}) I changed my mind");
+                        int itemChoice = text.GetLineInt(player.Items.Count + 1);
+                        if (itemChoice <= player.Items.Count)
+                        {
+                            text.AddLine($"You give item: {player.Items[itemChoice - 1].Name} to {npc.Name}");
+                            text.GetLine();
+                            if (player.Items[itemChoice - 1].Name == npc.DesiredItem.Name || npc.DesiredItem.Name == "any")
+                            {
+                                text.AddLine(npc.DesiredItemDialogue);
+                            }
+                            else
+                            {
+                                text.AddLine(npc.UndesiredItemDialogue);
+                            }
+                            text.GetLine();
+                        }
+                    }
+                    else
+                    {
+                        text.CleanLine("You don't have any items");
+                    }
+                }
+                if (choice == 3)
+                {
+                    talkingToNpc = false;
+                    break;
+                }
             }
         }
             
         
         public void VisitLandmark(Location location, Player player, Landmark landmark)
         {
-            text.CleanLine("Visiting landmark: " + landmark.Name);
-            text.AddLine("Description: "+landmark.Description);
-            text.GetLine();
-            int combatChance = rand.Next(1, 101);
-            if(combatChance < landmark.CombatChance)
+            visitingLandmark = true;
+            while (visitingLandmark)
             {
-                int ei = rand.Next(0, landmark.Monsters.Count);
-                CombatEncounter(landmark.Monsters[ei], player);
                 text.CleanLine("Visiting landmark: " + landmark.Name);
                 text.AddLine("Description: " + landmark.Description);
-            }
-            
-            if(landmark.Npcs.Count > 0)
-            {
-                text.AddLine("You can talk to: ");
-                int i;
-                for(i = 0; i < landmark.Npcs.Count; i++)
+                text.GetLine();
+                int combatChance = rand.Next(1, 101);
+                if (combatChance < landmark.CombatChance)
                 {
-                    text.AddLine($"{i+1}) {landmark.Npcs[i].Name}");
+                    int ei = rand.Next(0, landmark.Monsters.Count);
+                    CombatEncounter(landmark.Monsters[ei], player);
+                    text.CleanLine("Visiting landmark: " + landmark.Name);
+                    text.AddLine("Description: " + landmark.Description);
                 }
-                text.AddLine($"{i+1}) Search for items instead");
-                text.AddLine($"{i + 2}) Leave landmark");
-                int choice = text.GetLineInt(landmark.Npcs.Count+2);
-                if(choice <= landmark.Npcs.Count)
+
+                if (landmark.Npcs.Count > 0)
                 {
-                    TalkToNpc(location, player, landmark, landmark.Npcs[choice-1]);
-                }
-                else if(choice == landmark.Npcs.Count+1)
-                {
-                    if (landmark.Items.Count > 0)
+                    text.AddLine("You can talk to: ");
+                    int i;
+                    for (i = 0; i < landmark.Npcs.Count; i++)
                     {
-                        text.AddLine("You found items: ");
-                        for (int j = 0; j < landmark.Items.Count; j++)
+                        text.AddLine($"{i + 1}) {landmark.Npcs[i].Name}");
+                    }
+                    text.AddLine($"{i + 1}) Search for items instead");
+                    text.AddLine($"{i + 2}) Leave landmark");
+                    int choice = text.GetLineInt(landmark.Npcs.Count + 2);
+                    if (choice <= landmark.Npcs.Count)
+                    {
+                        TalkToNpc(location, player, landmark, landmark.Npcs[choice - 1]);
+                    }
+                    else if (choice == landmark.Npcs.Count + 1)
+                    {
+                        if (landmark.Items.Count > 0)
                         {
-                            text.AddLine(landmark.Items[j].Name);
-                            player.Items.Add(landmark.Items[j]);
-                            landmark.Items.RemoveAt(j);
+                            text.AddLine("You found items: ");
+                            for (int j = 0; j < landmark.Items.Count; j++)
+                            {
+                                text.AddLine(landmark.Items[j].Name);
+                                player.Items.Add(landmark.Items[j]);
+                                landmark.Items.RemoveAt(j);
+                            }
+                        }
+                        else
+                        {
+                            text.AddLine("No items found.");
                         }
                     }
                     else
                     {
-                        text.AddLine("No items found.");
+                        visitingLandmark = false;
+                        break;
                     }
+
                 }
                 else
                 {
-                    ExploreLocation(location, player);
+                    text.AddLine("You found items: ");
+                    for (int i = 0; i < landmark.Items.Count; i++)
+                    {
+                        text.AddLine(landmark.Items[i].Name);
+                        player.Items.Add(landmark.Items[i]);
+                    }
                 }
-                
+                text.GetLine();
             }
-            else
-            {
-                text.AddLine("You found items: ");
-                for(int i = 0; i < landmark.Items.Count; i++)
-                {
-                    text.AddLine(landmark.Items[i].Name);
-                    player.Items.Add(landmark.Items[i]);
-                }
-            }
-            text.GetLine();
-            VisitLandmark(location, player, landmark);
-
-
         }
         public void PlayerTurn(Monster monster, Player player)
         {

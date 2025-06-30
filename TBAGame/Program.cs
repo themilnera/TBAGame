@@ -27,13 +27,5 @@ playerItems.Add(new Item("Healing potion", "A small vial of red liquid", true, 2
 
 Player player = new Player("PLAYER", "the player", 1, playerWeapons, playerItems);
 
-//List<Weapon> monsterWeapons = new List<Weapon>();
-//monsterWeapons.Add(new Weapon("Claws", "Monster's claws", 1, 2));
-//monsterWeapons.Add(new Weapon("Teeth", "Sharp teeth", 1, 4));
-//string[] dialogue = { "I'm gonna eatcha!", "AGH, you've killed me!", "This is pointless!", "Just give up!", "Let me eat you!" };
-
-//Monster monster = new Monster("Generic monster", "A generic monster", 1, monsterWeapons, dialogue);
-
 Story story = new Story();
 story.ExploreLocation(beach, player);
-//story.CombatEncounter(monster, player);
